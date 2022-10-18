@@ -5,20 +5,28 @@ from urllib.parse import urlsplit
 from collections import deque, Counter
 from bs4 import BeautifulSoup
 import difflib
+import streamlit as st
 
 DEBUG = True
 
 
 def main_scrap(list_of_links):
     # List of links from csv
+    print('1&&&&&&&<<<<<<<<<&&&&')
     queue_of_link = deque(list_of_links)
     result = {}
     while queue_of_link:
+        print('1&&&&&&&&&&&')
         link = queue_of_link.popleft()
         emails = process_links(link)
-        result[link] = emails
 
-    return result
+        print(f"emails {emails}")
+        for email in emails:
+            result[link] = list(email.keys())
+            st.write(email)
+        print(f"result {result}")
+
+    yield result
 
 
 def process_links(starting_url):
@@ -45,8 +53,8 @@ def process_links(starting_url):
         path = url[:url.rfind('/') + 1] if '/' in parts.path else url
 
         # get url's content
-        # if DEBUG:
-        print("Crawling URL %s" % url)
+        if DEBUG:
+            print("Crawling URL %s" % url)
         try:
             response = requests.get(url, timeout=10)
             anchors_counter += 1
@@ -56,11 +64,11 @@ def process_links(starting_url):
 
         emails = get_emails(response.text, emails)
 
-        if sum(emails.values()) > 10:
-            return emails
-
         if DEBUG:
-            print(emails)
+            print(f"emails 11 {emails}")
+
+        if sum(emails.values()) > 10:
+            yield emails
 
         # create a beutiful soup for the html document
         soup = BeautifulSoup(response.text, 'lxml')
@@ -82,14 +90,17 @@ def process_links(starting_url):
         unprocessed_urls = sorted(unprocessed_urls,
                                   key=lambda z: difflib.SequenceMatcher(None, z, "mail contact customer about").ratio(),
                                   reverse=True)
-        print('unprocessed_urls ===', unprocessed_urls)
+        if DEBUG:
+            print('unprocessed_urls ===', unprocessed_urls)
         unprocessed_urls = deque(unprocessed_urls)
+    yield emails
 
 
 def get_emails(website, emails_list):
     # extract all email addresses and add them into the resulting set
     # You may edit the regular expression as per your requirement
     new_emails = Counter(re.findall(r"[a-z\.\-+_]+@[a-z\.\-+_]+\.[a-z]+", website, re.I))
+    if DEBUG:
+        print(new_emails, "emails_list  === ", emails_list)
     emails_list.update(new_emails)
     return emails_list
-
