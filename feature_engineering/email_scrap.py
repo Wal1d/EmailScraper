@@ -7,23 +7,21 @@ from bs4 import BeautifulSoup
 import difflib
 import streamlit as st
 
-DEBUG = True
+DEBUG = False
 
 
 def main_scrap(list_of_links):
     # List of links from csv
-    print('1&&&&&&&<<<<<<<<<&&&&')
     queue_of_link = deque(list_of_links)
     result = {}
     while queue_of_link:
-        print('1&&&&&&&&&&&')
         link = queue_of_link.popleft()
         emails = process_links(link)
 
         print(f"emails {emails}")
         for email in emails:
             result[link] = list(email.keys())
-            st.write(email)
+            st.write(result)
         print(f"result {result}")
 
     yield result
@@ -38,9 +36,12 @@ def process_links(starting_url):
     emails = {}
     # process urls one by one from unprocessed_url queue until queue is empty
 
+    print(f">>> starting_url {starting_url}")
+
     # counter to stop diving in anchor website at some point
     anchors_counter = 0
     while len(unprocessed_urls) and anchors_counter < 10:
+        print(f">>> test enter {starting_url} {anchors_counter}, {unprocessed_urls} ")
 
         # move next url from the queue to the set of processed urls
         url = unprocessed_urls.popleft()
@@ -53,13 +54,14 @@ def process_links(starting_url):
         path = url[:url.rfind('/') + 1] if '/' in parts.path else url
 
         # get url's content
-        if DEBUG:
-            print("Crawling URL %s" % url)
+        # if DEBUG:
+        print("Crawling URL %s" % url)
         try:
             response = requests.get(url, timeout=10)
             anchors_counter += 1
-        except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+        except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.Timeout) as err:
             # ignore pages with errors and continue with next url
+            print(f"ignoring {url} pages with errors and continue with next url -- {err}")
             continue
 
         emails = get_emails(response.text, emails)
@@ -68,6 +70,7 @@ def process_links(starting_url):
             print(f"emails 11 {emails}")
 
         if sum(emails.values()) > 10:
+            print(f">>>   returnnn  {emails}")
             yield emails
 
         # create a beutiful soup for the html document
