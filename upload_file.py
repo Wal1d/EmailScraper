@@ -27,7 +27,7 @@ class STFileManager(IFileManager):
     @staticmethod
     def get_csv(uploaded_file):
         with st.spinner('Loading DATA'):
-            data = pd.read_csv(uploaded_file, delimiter=';')
+            data = pd.read_csv(uploaded_file, header=None, delimiter=';')
             data = data.iloc[:, 0]
             st.dataframe(data)
             data_list = data.values.tolist()
@@ -42,5 +42,6 @@ def upload_file_st():
             return STFileManager.get_csv(uploaded_file)
         except Exception as err:
             st.write(f"error {err}")
+    return None
 
 

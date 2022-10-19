@@ -1,4 +1,6 @@
 import re
+
+import pandas as pd
 import requests
 import requests.exceptions
 from urllib.parse import urlsplit
@@ -13,18 +15,19 @@ DEBUG = False
 def main_scrap(list_of_links):
     # List of links from csv
     queue_of_link = deque(list_of_links)
-    result = {}
+    result = pd.DataFrame([], columns=['link', 'email'])
+
     while queue_of_link:
         link = queue_of_link.popleft()
         emails = process_links(link)
-
-        print(f"emails {emails}")
-        for email in emails:
-            result[link] = list(email.keys())
-            st.write(result)
+        if not emails:
+            emails['None'] = 0
+        row = {'link': link, 'email': list(emails.keys())}
+        result.append(row,  ignore_index=True)
+        st.dataframe(row, )
         print(f"result {result}")
 
-    yield result
+    return result
 
 
 def process_links(starting_url):
@@ -54,12 +57,13 @@ def process_links(starting_url):
         path = url[:url.rfind('/') + 1] if '/' in parts.path else url
 
         # get url's content
-        # if DEBUG:
-        print("Crawling URL %s" % url)
+        if DEBUG:
+            print("Crawling URL %s" % url)
         try:
             response = requests.get(url, timeout=10)
             anchors_counter += 1
-        except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.Timeout) as err:
+        except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.Timeout,
+                Exception) as err:
             # ignore pages with errors and continue with next url
             print(f"ignoring {url} pages with errors and continue with next url -- {err}")
             continue
@@ -71,7 +75,7 @@ def process_links(starting_url):
 
         if sum(emails.values()) > 10:
             print(f">>>   returnnn  {emails}")
-            yield emails
+            return emails
 
         # create a beutiful soup for the html document
         soup = BeautifulSoup(response.text, 'lxml')
@@ -96,7 +100,7 @@ def process_links(starting_url):
         if DEBUG:
             print('unprocessed_urls ===', unprocessed_urls)
         unprocessed_urls = deque(unprocessed_urls)
-    yield emails
+    return emails
 
 
 def get_emails(website, emails_list):
@@ -107,3 +111,7 @@ def get_emails(website, emails_list):
         print(new_emails, "emails_list  === ", emails_list)
     emails_list.update(new_emails)
     return emails_list
+
+
+def form_callback():
+    st.write(st.session_state.email_list)
