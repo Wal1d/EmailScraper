@@ -23,8 +23,8 @@ def main_scrap(list_of_links):
         if not emails:
             emails['None'] = 0
         row = {'link': link, 'email': list(emails.keys())}
-        result.append(row,  ignore_index=True)
-        st.dataframe(row, )
+        result = result.append(row, ignore_index=True)
+        st.dataframe(row)
         print(f"result {result}")
 
     return result
@@ -113,5 +113,6 @@ def get_emails(website, emails_list):
     return emails_list
 
 
-def form_callback():
-    st.write(st.session_state.email_list)
+def convert_df(df):
+    return df.to_excel(excel_writer='excel', index=False)
+    # return df.to_csv(index=False, sep=',', encoding='utf-8')

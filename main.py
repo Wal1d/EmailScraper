@@ -2,6 +2,7 @@ import streamlit as st
 
 from feature_engineering.email_scrap import main_scrap
 from upload_file import upload_file_st
+from utils import download_df_as_csv, download_df_as_excel
 
 st.title('Tiny ML in nature')
 
@@ -22,8 +23,8 @@ def main():
                 if list_links:
                     list_of_emails = main_scrap(list_links)
                     print(f"list_of_emails ==== {list_of_emails}")
-                    for email in list_of_emails:
-                        print(email)
+                    download_df_as_excel(list_of_emails)
+
 
     if choice == "Scrap from list":
 
@@ -40,6 +41,7 @@ def main():
                 list_of_emails = []
                 if list_links_from_str:
                     list_of_emails = main_scrap(list_links_from_str)
+                    download_df_as_excel(list_of_emails)
 
 
 if __name__ == '__main__':
